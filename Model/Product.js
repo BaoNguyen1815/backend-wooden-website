@@ -53,7 +53,7 @@ const Product = {
         product.color,
         product.price,
         id
-      ]
+      ],callback
     );
   }
 };

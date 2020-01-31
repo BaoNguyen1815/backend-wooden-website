@@ -2,8 +2,8 @@ const mysql = require("mysql")
 
 const connection = mysql.createConnection({
   host: "localhost",
-  user: "nguyen",
-  password: "nguyen1815",
+  user: "nguyen", //change to your user
+  password: "nguyen1815", //change to your password
   database: "Product"
 });
 
