@@ -26,7 +26,9 @@ Step5: Run terminal command "node server.js" to run back-end
 -To check the API:
 
 After server.js runs successfully, you can check the API in port 8233. 
+
 The example of an API resquest is like the picture below: (send to your image course i cannot add image to this stupid readme)
+
 API is located in file "ProductRoute.js"
 
 
