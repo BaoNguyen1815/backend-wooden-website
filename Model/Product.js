@@ -23,16 +23,19 @@ const Product = {
   },
   addProduct: (product, callback) => {
     return connection.query(
-      "insert into Product(id,name,type,image,description,size,color,price) values(?,?,?,?,?,?,?,?)",
+      "insert into Product(code,name,type,image,description,size,color,price,note,bestseller,newarrival) values(?,?,?,?,?,?,?,?,?,?,?)",
       [
-        product.id,
+        product.code,
         product.name,
         product.type,
         product.image,
         product.description,
         product.size,
         product.color,
-        product.price
+        product.price,
+        product.note,
+        product.bestseller,
+        product.newarrival,
       ],
       callback
     );
@@ -42,9 +45,9 @@ const Product = {
   },
   updateProduct: (id, product, callback) => {
     return connection.query(
-      "update Product set id =?, name = ?,type = ?,image = ?, description = ?, size = ?, color = ?, price =? where id =?",
+      "update Product set code =?, name = ?,type = ?,image = ?, description = ?, size = ?, color = ?, price =?, note=?, bestseller=?, newarrival=? where id =?",
       [
-        product.id,
+        product.code,
         product.name,
         product.type,
         product.image,
@@ -52,6 +55,9 @@ const Product = {
         product.size,
         product.color,
         product.price,
+        product.note,
+        product.bestseller,
+        product.newarrival,
         id
       ],callback
     );

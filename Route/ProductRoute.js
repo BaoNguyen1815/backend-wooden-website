@@ -39,8 +39,8 @@ ProductRoute.get("/:type",(req,res) =>{
 })
 
 //API update product
-ProductRoute.put("/",(req,res)=>{
-  Product.updateProduct(req.query.id,req.body,(err,rows)=>{
+ProductRoute.put("/:id",(req,res)=>{
+  Product.updateProduct(req.params.id,req.body,(err,rows)=>{
      if (err) res.json(err);
      else
        res.status(201).json({
@@ -52,7 +52,7 @@ ProductRoute.put("/",(req,res)=>{
 
 //API delete
 ProductRoute.delete("/:id", (req, res) => {
-  Product.deleteProduct(request.params.id, (err, count) => {
+  Product.deleteProduct(req.params.id, (err, count) => {
     if (err) res.json(err);
     else
       res.status(201).json({
