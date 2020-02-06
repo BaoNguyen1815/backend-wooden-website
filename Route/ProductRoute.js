@@ -25,6 +25,17 @@ ProductRoute.get("/", (req, res) => {
       });
   });
 });
+// API Get product by id
+ProductRoute.get("/:id", (req, res) => {
+  Product.getProductById(req.params.id,(err, rows) => {
+    if (err) res.json(err);
+    else
+      res.status(201).json({
+        success: true,
+        data: rows
+      });
+  });
+});
 
 //API Get By Type
 ProductRoute.get("/:type",(req,res) =>{
