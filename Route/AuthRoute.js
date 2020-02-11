@@ -53,30 +53,34 @@ else
 
 AuthRouter.post("/check", (req, res) => {
   const access_token = req.body.access_token;
-  if (access_token && jwt.verify(access_token, jwtSecret)) {
-    res.send({
-      success: 1,
-      message: "Người dùng đã đăng nhập",
-      user: jwt.verify(access_token, jwtSecret)
-    });
-  } else {
-    res.send({
-      success: 0,
-      message: "Người dùng chưa đăng nhập"
-    });
-  }
-  // if (req.session.user) {
-  //     res.send({
-  //         success: 1,
-  //         message: 'Người dùng đã đăng nhập',
-  //         user: req.session.user
-  //     });
-  // } else {
-  //     res.send({
-  //         success: 0,
-  //         message: 'Người dùng chưa đăng nhập'
-  //     });
-  // }
+  jwt.verify(access_token,jwtSecret,(err,user)=>{
+    if(err){
+       res.send({
+         success: 0,
+         message: "Người dùng chưa đăng nhập"
+       });
+    }
+    else  res.send({
+         success: 1,
+         message: "Người dùng đã đăng nhập",
+         user: user
+       });
+
+  })
+ // else{
+    //     if (access_token && jwt.verify(access_token, jwtSecret)) {
+    //    res.send({
+    //      success: 1,
+    //      message: "Người dùng đã đăng nhập",
+    //      user: jwt.verify(access_token, jwtSecret)
+    //    });
+    //  } else {
+    //    res.send({
+    //      success: 0,
+    //      message: "Người dùng chưa đăng nhập"
+    //    });
+    //  }
+    // }
 });
 
 module.exports = AuthRouter;
