@@ -21,6 +21,18 @@ const Product = {
       callback
     );
   },
+  getBestSellerProduct: callback => {
+    return connection.query(
+      "select * from Product where bestseller = 1",
+      callback
+    );
+  },
+  getNewArrivalProduct: callback => {
+    return connection.query(
+      "select * from Product where newarrival=1",
+      callback
+    );
+  },
   addProduct: (product, callback) => {
     return connection.query(
       "insert into Product(code,name,type,image,description,size,color,price,note,bestseller,newarrival) values(?,?,?,?,?,?,?,?,?,?,?)",
@@ -35,7 +47,7 @@ const Product = {
         product.price,
         product.note,
         product.bestseller,
-        product.newarrival,
+        product.newarrival
       ],
       callback
     );
@@ -59,7 +71,8 @@ const Product = {
         product.bestseller,
         product.newarrival,
         id
-      ],callback
+      ],
+      callback
     );
   }
 };

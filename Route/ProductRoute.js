@@ -25,6 +25,30 @@ ProductRoute.get("/", (req, res) => {
       });
   });
 });
+
+// //API GetBestSellerProduct
+// ProductRoute.get("/bestseller",(req,res)=>{
+//   Product.getBestSellerProduct((err,rows)=>{
+//     if(err) res.json(err);
+//     else
+//     res.status(201).json({
+//       success:true,
+//       data:rows
+//     })
+//   })
+// })
+// //API GetNewArrival
+// ProductRoute.get("/new-arrival",(req,res)=>{
+//   Product.getNewArrivalProduct((err,rows)=>{
+//     if(err) res.json(err);
+//     else
+//     res.status(201).json({
+//       success:true,
+//       data:rows
+//     })
+//   })
+// })
+
 // API Get product by id
 ProductRoute.get("/:id", (req, res) => {
   Product.getProductById(req.params.id,(err, rows) => {
@@ -48,6 +72,10 @@ ProductRoute.get("/:type",(req,res) =>{
       });
   })
 })
+
+
+
+
 
 //API update product
 ProductRoute.put("/:id",(req,res)=>{

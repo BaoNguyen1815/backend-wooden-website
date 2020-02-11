@@ -29,7 +29,6 @@ else
           message: "Không tồn tại người dùng có username này!"
         });
       else {
-        console.log(rows[0].password)
         if (bcrypt.compareSync(password, rows[0].password)) {
           const access_token = jwt.sign(
             { username, id: rows[0].id },
@@ -52,9 +51,8 @@ else
   });
 });
 
-AuthRouter.get("/check", (req, res) => {
-  const access_token = req.query.access_token;
-
+AuthRouter.post("/check", (req, res) => {
+  const access_token = req.body.access_token;
   if (access_token && jwt.verify(access_token, jwtSecret)) {
     res.send({
       success: 1,
