@@ -1,9 +1,32 @@
 const express = require("express");
 const ProductRoute = express.Router();
 const Product = require("../Model/Product");
+const multer = require("multer")
+var upload = multer({
+  storage: multer.diskStorage({
+    destination: function(req, file, callback) {
+      callback(null, "../uploads");
+    },
+    filename: function(req, file, callback) {
+      callback(
+        null,
+        file.fieldname + "-" + Date.now() + path.extname(file.originalname)
+      );
+    }
+  }),
+  fileFilter: function(req, file, callback) {
+    var ext = path.extname(file.originalname);
+    if (ext !== ".png" && ext !== ".JPG" && ext !== ".gif" && ext !== ".jpeg") {
+      return callback(/*res.end('Only images are allowed')*/ null, false);
+    }
 
+    callback(null, true);
+  }
+});
 // API Add Product
-ProductRoute.post("/", (req, res) => {
+ProductRoute.post("/",upload.single('image'), (req, res, next) => {
+  console.log(req.file)
+  console.log(req.body)
   Product.addProduct(req.body, err => {
     if (err) res.json(err);
     else
@@ -26,28 +49,6 @@ ProductRoute.get("/", (req, res) => {
   });
 });
 
-// //API GetBestSellerProduct
-// ProductRoute.get("/bestseller",(req,res)=>{
-//   Product.getBestSellerProduct((err,rows)=>{
-//     if(err) res.json(err);
-//     else
-//     res.status(201).json({
-//       success:true,
-//       data:rows
-//     })
-//   })
-// })
-// //API GetNewArrival
-// ProductRoute.get("/new-arrival",(req,res)=>{
-//   Product.getNewArrivalProduct((err,rows)=>{
-//     if(err) res.json(err);
-//     else
-//     res.status(201).json({
-//       success:true,
-//       data:rows
-//     })
-//   })
-// })
 
 // API Get product by id
 ProductRoute.get("/:id", (req, res) => {
