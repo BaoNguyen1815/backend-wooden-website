@@ -62,8 +62,8 @@ ProductRoute.get("/", (req, res) => {
       if (rows[i].bestseller == 1) {
         rows[i].bestseller = true;
       }
-      if (rows[0].bestseller == 0) {
-        rows[0].bestseller = false;
+      if (rows[i].bestseller == 0) {
+        rows[i].bestseller = false;
       }
       if (rows[i].newarrival == 0) {
         rows[i].newarrival = false;
@@ -91,8 +91,8 @@ ProductRoute.get("/types/:type", (req, res) => {
          if (rows[i].bestseller == 1) {
            rows[i].bestseller = true;
          }
-         if (rows[0].bestseller == 0) {
-           rows[0].bestseller = false;
+         if (rows[i].bestseller == 0) {
+           rows[i].bestseller = false;
          }
          if (rows[i].newarrival == 0) {
            rows[i].newarrival = false;
