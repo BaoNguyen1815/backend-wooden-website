@@ -2,7 +2,7 @@ const express = require("express");
 const ProductRoute = express.Router();
 const Product = require("../Model/Product");
 const multer = require("multer");
-const fs = require("fs")
+const fs = require("fs");
 // var upload = multer({
 //   storage: multer.diskStorage({
 //     destination: function(req, file, callback) {
@@ -37,23 +37,20 @@ ProductRoute.post("/", (req, res, next) => {
   });
 });
 
-
 //API Upload
-ProductRoute.post("/upload",upload.array('image',12), (req, res, next) => {
-  console.log(req.files)
-   const processedFiles = req.files || {}; // MULTER xử lý và gắn đối tượng FILE vào req
-   processedFiles.map(processedFile)
-   let orgName = processedFile.originalname || ""; // Tên gốc trong máy tính của người upload
-   orgName = orgName.trim().replace(/ /g, "-");
-   const fullPathInServ = processedFile.path; // Đường dẫn đầy đủ của file vừa đc upload lên server
-   // Đổi tên của file vừa upload lên, vì multer đang đặt default ko có đuôi file
-   const newFullPath = `${fullPathInServ}-${orgName}`;
-   fs.renameSync(fullPathInServ, newFullPath);
-   res.send({
-     status: true,
-     message: "file uploaded",
-     fileNameInServer: newFullPath
-   });
+ProductRoute.post("/upload", upload.single("image"), (req, res, next) => {
+  const processedFile = req.file || {}; // MULTER xử lý và gắn đối tượng FILE vào req
+  let orgName = processedFile.originalname || ""; // Tên gốc trong máy tính của người upload
+  orgName = orgName.trim().replace(/ /g, "-");
+  const fullPathInServ = processedFile.path; // Đường dẫn đầy đủ của file vừa đc upload lên server
+  // Đổi tên của file vừa upload lên, vì multer đang đặt default ko có đuôi file
+  const newFullPath = `${fullPathInServ}-${orgName}`;
+  fs.renameSync(fullPathInServ, newFullPath);
+  res.send({
+    status: true,
+    message: "file uploaded",
+    fileNameInServer: newFullPath
+  });
 });
 
 // API Get all
@@ -83,11 +80,37 @@ ProductRoute.get("/types/:type", (req, res) => {
   });
 });
 
-
-
 // API Get product by id
 ProductRoute.get("/:id", (req, res) => {
-  Product.getProductById(req.params.id,(err, rows) => {
+  Product.getProductById(req.params.id, (err, row) => {
+    if (err) res.json(err);
+    else {
+      const data = row[0];
+      if (row[0].bestseller == 1) {
+        data.bestseller = true;
+      }
+      if (row[0].bestseller == 0) {
+        data.bestseller = false;
+      }
+      if (row[0].newarrival == 0) {
+        data.newarrival = false;
+      }
+      if (row[0].newarrival == 1) {
+        data.newarrival = true;
+      }
+      res.status(201).json({
+        success: true,
+        data: data
+      });
+    }
+  });
+});
+
+//API Get By Type
+
+//API update product
+ProductRoute.put("/:id", (req, res) => {
+  Product.updateProduct(req.params.id, req.body, (err, rows) => {
     if (err) res.json(err);
     else
       res.status(201).json({
@@ -96,24 +119,6 @@ ProductRoute.get("/:id", (req, res) => {
       });
   });
 });
-
-//API Get By Type
-
-
-
-
-
-//API update product
-ProductRoute.put("/:id",(req,res)=>{
-  Product.updateProduct(req.params.id,req.body,(err,rows)=>{
-     if (err) res.json(err);
-     else
-       res.status(201).json({
-         success: true,
-         data: rows
-       });
-  })
-})
 
 //API delete
 ProductRoute.delete("/:id", (req, res) => {
@@ -127,6 +132,4 @@ ProductRoute.delete("/:id", (req, res) => {
   });
 });
 
-
-
-module.exports = ProductRoute
+module.exports = ProductRoute;

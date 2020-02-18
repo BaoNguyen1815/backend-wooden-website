@@ -7,6 +7,7 @@ const Product = {
   getProductById: (id, callback) => {
     return connection.query("select * from Product where id=?", [id], callback);
   },
+  // getImageByProductId : (id)
   getProductByName: (name, callback) => {
     return connection.query(
       "select * from Product where name=?",
