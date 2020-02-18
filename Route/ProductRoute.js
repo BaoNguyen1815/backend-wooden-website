@@ -63,6 +63,10 @@ ProductRoute.get("/", (req, res) => {
       res.status(201).json({
         success: true,
         data: rows
+        // data: {
+        //   product : rows;
+        //   image :
+        // }
       });
   });
 });
