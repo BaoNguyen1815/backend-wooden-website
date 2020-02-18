@@ -58,6 +58,20 @@ ProductRoute.get("/", (req, res) => {
   Product.getAll((err, rows) => {
     if (err) res.json(err);
     else
+    for(let i = 0; i < rows.length;i++){
+      if (rows[i].bestseller == 1) {
+        rows[i].bestseller = true;
+      }
+      if (rows[0].bestseller == 0) {
+        rows[0].bestseller = false;
+      }
+      if (rows[i].newarrival == 0) {
+        rows[i].newarrival = false;
+      }
+      if (rows[i].newarrival == 1) {
+        rows[i].newarrival = true;
+      }
+    }
       res.status(201).json({
         success: true,
         data: rows
@@ -72,11 +86,26 @@ ProductRoute.get("/", (req, res) => {
 ProductRoute.get("/types/:type", (req, res) => {
   Product.getProductByType(req.params.type, (err, rows) => {
     if (err) res.json(err);
-    else
+    else {
+       for (let i = 0; i < rows.length; i++) {
+         if (rows[i].bestseller == 1) {
+           rows[i].bestseller = true;
+         }
+         if (rows[0].bestseller == 0) {
+           rows[0].bestseller = false;
+         }
+         if (rows[i].newarrival == 0) {
+           rows[i].newarrival = false;
+         }
+         if (rows[i].newarrival == 1) {
+           rows[i].newarrival = true;
+         }
+       }
       res.status(201).json({
         success: true,
         data: rows
       });
+    }
   });
 });
 
@@ -85,18 +114,18 @@ ProductRoute.get("/:id", (req, res) => {
   Product.getProductById(req.params.id, (err, row) => {
     if (err) res.json(err);
     else {
-      const data = row[0];
+      const data = row;
       if (row[0].bestseller == 1) {
-        data.bestseller = true;
+        data[0].bestseller = true;
       }
       if (row[0].bestseller == 0) {
-        data.bestseller = false;
+        data[0].bestseller = false;
       }
       if (row[0].newarrival == 0) {
-        data.newarrival = false;
+        data[0].newarrival = false;
       }
       if (row[0].newarrival == 1) {
-        data.newarrival = true;
+        data[0].newarrival = true;
       }
       res.status(201).json({
         success: true,
