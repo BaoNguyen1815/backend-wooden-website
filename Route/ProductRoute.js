@@ -39,9 +39,10 @@ ProductRoute.post("/", (req, res, next) => {
 
 
 //API Upload
-ProductRoute.post("/upload",upload.single('image'), (req, res, next) => {
-  console.log(req.file)
-   const processedFile = req.file || {}; // MULTER xử lý và gắn đối tượng FILE vào req
+ProductRoute.post("/upload",upload.array('image',12), (req, res, next) => {
+  console.log(req.files)
+   const processedFiles = req.files || {}; // MULTER xử lý và gắn đối tượng FILE vào req
+   processedFiles.map(processedFile)
    let orgName = processedFile.originalname || ""; // Tên gốc trong máy tính của người upload
    orgName = orgName.trim().replace(/ /g, "-");
    const fullPathInServ = processedFile.path; // Đường dẫn đầy đủ của file vừa đc upload lên server
@@ -71,6 +72,18 @@ ProductRoute.get("/", (req, res) => {
   });
 });
 
+ProductRoute.get("/types/:type", (req, res) => {
+  Product.getProductByType(req.params.type, (err, rows) => {
+    if (err) res.json(err);
+    else
+      res.status(201).json({
+        success: true,
+        data: rows
+      });
+  });
+});
+
+
 
 // API Get product by id
 ProductRoute.get("/:id", (req, res) => {
@@ -85,16 +98,6 @@ ProductRoute.get("/:id", (req, res) => {
 });
 
 //API Get By Type
-ProductRoute.get("/:type",(req,res) =>{
-  Product.getProductByType(req.param.id,(err,rows)=>{
-    if (err) res.json(err);
-    else
-      res.status(201).json({
-        success: true,
-        data: rows
-      });
-  })
-})
 
 
 
