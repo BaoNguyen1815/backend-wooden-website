@@ -1,6 +1,7 @@
 const express = require("express");
 const ProductRoute = express.Router();
 const Product = require("../Model/Product");
+const Image = require("../Model/Image");
 const multer = require("multer");
 const fs = require("fs");
 // var upload = multer({
@@ -27,29 +28,44 @@ const fs = require("fs");
 const upload = multer({ dest: "images/" });
 // API Add Product
 ProductRoute.post("/", (req, res, next) => {
-  Product.addProduct(req.body, err => {
+  const image = {
+    img1 : req.body.image[0],
+    img2 : req.body.image[1],
+    img3 : req.body.image[2],
+    img4 : req.body.image[3],
+  }
+  Product.addProduct(req.body, (err, row) => {
     if (err) res.json(err);
     else
-      res.status(201).json({
-        success: true,
-        data: req.body
+      Image.addImageByProductId(row.insertId, image, err => {
+        if (err) res.json(err);
+        else
+          res.status(201).json({
+            success: true,
+            data: req.body
+          });
       });
   });
 });
 
 //API Upload
-ProductRoute.post("/upload", upload.single("image"), (req, res, next) => {
-  const processedFile = req.file || {}; // MULTER xử lý và gắn đối tượng FILE vào req
-  let orgName = processedFile.originalname || ""; // Tên gốc trong máy tính của người upload
-  orgName = orgName.trim().replace(/ /g, "-");
-  const fullPathInServ = processedFile.path; // Đường dẫn đầy đủ của file vừa đc upload lên server
-  // Đổi tên của file vừa upload lên, vì multer đang đặt default ko có đuôi file
-  const newFullPath = `${fullPathInServ}-${orgName}`;
-  fs.renameSync(fullPathInServ, newFullPath);
+ProductRoute.post("/upload", upload.array("image", 4), (req, res, next) => {
+  const processedFiles = req.files || {}; // MULTER xử lý và gắn đối tượng FILE vào req
+  const arr = [];
+  processedFiles.map(processedFile => {
+    let orgName = processedFile.originalname || ""; // Tên gốc trong máy tính của người upload
+    orgName = orgName.trim().replace(/ /g, "-");
+    const fullPathInServ = processedFile.path; // Đường dẫn đầy đủ của file vừa đc upload lên server
+    // Đổi tên của file vừa upload lên, vì multer đang đặt default ko có đuôi file
+    const newFullPath = `${fullPathInServ}-${orgName}`;
+    fs.renameSync(fullPathInServ, newFullPath);
+    let data = newFullPath.replace("images/","");
+    arr.push(data)
+  });
   res.send({
     status: true,
     message: "file uploaded",
-    fileNameInServer: newFullPath
+    fileNameInServer: arr
   });
 });
 
@@ -58,49 +74,50 @@ ProductRoute.get("/", (req, res) => {
   Product.getAll((err, rows) => {
     if (err) res.json(err);
     else
-    for(let i = 0; i < rows.length;i++){
-      if (rows[i].bestseller == 1) {
-        rows[i].bestseller = true;
+      for (let i = 0; i < rows.length; i++) {
+        if (rows[i].bestseller == 1) {
+          rows[i].bestseller = true;
+        }
+        if (rows[i].bestseller == 0) {
+          rows[i].bestseller = false;
+        }
+        if (rows[i].newarrival == 0) {
+          rows[i].newarrival = false;
+        }
+        if (rows[i].newarrival == 1) {
+          rows[i].newarrival = true;
+        }
       }
-      if (rows[i].bestseller == 0) {
-        rows[i].bestseller = false;
-      }
-      if (rows[i].newarrival == 0) {
-        rows[i].newarrival = false;
-      }
-      if (rows[i].newarrival == 1) {
-        rows[i].newarrival = true;
-      }
-    }
-      res.status(201).json({
-        success: true,
-        data: rows
-        // data: {
-        //   product : rows;
-        //   image :
-        // }
-      });
+    res.status(201).json({
+      success: true,
+      data: rows
+      // data: {
+      //   product : rows;
+      //   image :
+      // }
+    });
   });
 });
 
+//API Get By Type
 ProductRoute.get("/types/:type", (req, res) => {
   Product.getProductByType(req.params.type, (err, rows) => {
     if (err) res.json(err);
     else {
-       for (let i = 0; i < rows.length; i++) {
-         if (rows[i].bestseller == 1) {
-           rows[i].bestseller = true;
-         }
-         if (rows[i].bestseller == 0) {
-           rows[i].bestseller = false;
-         }
-         if (rows[i].newarrival == 0) {
-           rows[i].newarrival = false;
-         }
-         if (rows[i].newarrival == 1) {
-           rows[i].newarrival = true;
-         }
-       }
+      for (let i = 0; i < rows.length; i++) {
+        if (rows[i].bestseller == 1) {
+          rows[i].bestseller = true;
+        }
+        if (rows[i].bestseller == 0) {
+          rows[i].bestseller = false;
+        }
+        if (rows[i].newarrival == 0) {
+          rows[i].newarrival = false;
+        }
+        if (rows[i].newarrival == 1) {
+          rows[i].newarrival = true;
+        }
+      }
       res.status(201).json({
         success: true,
         data: rows
@@ -134,8 +151,6 @@ ProductRoute.get("/:id", (req, res) => {
     }
   });
 });
-
-//API Get By Type
 
 //API update product
 ProductRoute.put("/:id", (req, res) => {

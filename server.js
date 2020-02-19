@@ -8,6 +8,7 @@ const app = express();
 app.use((req, res, next) => {
   next(); // cho chuong trinh tiep tuc di
 });
+app.use(express.static('images'))
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
