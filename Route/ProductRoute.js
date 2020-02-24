@@ -159,7 +159,7 @@ ProductRoute.put("/:id", (req, res) => {
     else
       res.status(201).json({
         success: true,
-        data: rows
+        data: req.body
       });
   });
 });
