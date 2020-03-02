@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 
 app.use("/", route);
 
-app.listen(8233, err => {
+app.listen(process.env.PORT || 8233, err => {
   if (err) console.log(err);
   else console.log("Server started");
 });
