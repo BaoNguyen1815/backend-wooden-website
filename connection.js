@@ -9,7 +9,7 @@ const connection = mysql.createConnection({
 });
 
 connection.connect(err => {
-  // if(err) throw err;
+  // if(err) throw err;hero
   //  connection.query("CREATE DATABASE Product", function(err, result) {
   //    if (err) throw err;
   //    console.log("Database created");
