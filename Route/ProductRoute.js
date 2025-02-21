@@ -4,191 +4,194 @@ const Product = require("../Model/Product");
 const Image = require("../Model/Image");
 const multer = require("multer");
 const fs = require("fs");
+const AWS = require("aws-sdk");
 const sharp = require("sharp");
+require("dotenv").config();
 
-const upload = multer({ dest: "images/" });
-
-const removeNotUsingImage = () => {
-  fs.readdir("./images/", (err, files) => {
-    if (err) console.log(err);
-    else {
-      Image.getAll((err, rows) => {
-        files.map(file => {
-          let isUse = false;
-          for (let i = 0; i < rows.length; i++) {
-            if (
-              file == rows[i].img1 ||
-              file == rows[i].img2 ||
-              file == rows[i].img3 ||
-              file == rows[i].img4
-            ) {
-              isUse = true;
-            }
-          }
-          if (!isUse)
-            fs.unlink(`./images/${file}`, function(err) {
-              if (err) throw err;
-            });
-        });
-      });
-    }
-  });
-};
-// API Add Product
-ProductRoute.post("/", (req, res, next) => {
-  const image = {
-    img1: req.body.image[0],
-    img2: req.body.image[1],
-    img3: req.body.image[2],
-    img4: req.body.image[3]
-  };
-  Product.addProduct(req.body, (err, row) => {
-    if (err) res.json(err);
-    else
-      Image.addImageByProductId(row.insertId, image, err => {
-        if (err) res.json(err);
-        else
-          res.status(201).json({
-            success: true,
-            data: req.body
-          });
-      });
-  });
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+// make keys to env
+const s3 = new AWS.S3({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.AWS_REGION,
 });
+console.log(
+  {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION,
+  }
+)
 
-//API Upload
-ProductRoute.post("/upload", upload.array("image", 4), (req, res, next) => {
-  const processedFiles = req.files || {}; // MULTER xử lý và gắn đối tượng FILE vào req
-  const arr = [];
-  processedFiles.map(processedFile => {
-    let orgName = processedFile.originalname || ""; // Tên gốc trong máy tính của người upload
-    orgName = orgName.trim().replace(/ /g, "-");
-    const fullPathInServ = processedFile.path; // Đường dẫn đầy đủ của file vừa đc upload lên server
-    // Đổi tên của file vừa upload lên, vì multer đang đặt default ko có đuôi file
-    const newFullPath = `${fullPathInServ}-${orgName}`;
-    // sharp(fullPathInServ).resize(200,200).toFile(newFullPath).then( =>{
-    //   console.log(data);
-    // });
-    fs.renameSync(fullPathInServ, newFullPath);
-    let data = newFullPath.replace("images/", "");
-    arr.push(data);
-  });
-  res.send({
-    status: true,
-    message: "file uploaded",
-    fileNameInServer: arr
-  });
-});
+// Xóa ảnh không sử dụng từ S3
+const removeNotUsingImage = async () => {
+  try {
+    const { Contents } = await s3.listObjectsV2({
+      Bucket: process.env.BUCKETEER_BUCKET_NAME,
+      Prefix: "uploads/",
+    }).promise();
 
+    const imagesInS3 = Contents.map(file => file.Key);
 
-// API Get all
-ProductRoute.get("/", (req, res) => {
-  Product.getAll((err, rows) => {
-    if (err) res.json(err);
-    else
-      for (let i = 0; i < rows.length; i++) {
-        if (rows[i].bestseller == 1) {
-          rows[i].bestseller = true;
-        }
-        if (rows[i].bestseller == 0) {
-          rows[i].bestseller = false;
-        }
-        if (rows[i].newarrival == 0) {
-          rows[i].newarrival = false;
-        }
-        if (rows[i].newarrival == 1) {
-          rows[i].newarrival = true;
-        }
+    Image.getAll((err, rows) => {
+      if (err) {
+        console.error("Lỗi khi lấy danh sách ảnh:", err);
+        return;
       }
-    res.status(201).json({
+
+      // Danh sách ảnh được sử dụng trong DB
+      const usedImages = rows.flatMap(row => [
+        row.img1, row.img2, row.img3, row.img4
+      ]).filter(Boolean);
+
+      // Xóa ảnh không được sử dụng
+      imagesInS3.forEach(async (fileKey) => {
+        if (!usedImages.includes(fileKey)) {
+          await s3.deleteObject({
+            Bucket: process.env.BUCKETEER_BUCKET_NAME,
+            Key: fileKey,
+          }).promise();
+          console.log(`Đã xóa ảnh không sử dụng: ${fileKey}`);
+        }
+      });
+    });
+  } catch (error) {
+    console.error("Lỗi khi xóa ảnh không sử dụng:", error);
+  }
+};
+
+// API Upload ảnh lên Bucketeer (Amazon S3)
+ProductRoute.post("/upload", upload.array("image", 4), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "No file uploaded!" });
+    }
+
+    const uploadedImages = await Promise.all(
+      req.files.map(async (file) => {
+        const fileName = `${Date.now()}_${file.originalname.replace(/ /g, "-")}`;
+        const params = {
+          Bucket: process.env.BUCKETEER_BUCKET_NAME,
+          Key: fileName,
+          Body: file.buffer,
+          ACL: "public-read",
+          ContentType: file.mimetype,
+        };
+
+        const { Location } = await s3.upload(params).promise();
+        return Location; // Trả về URL của ảnh trên S3
+      })
+    );
+
+    res.json({
       success: true,
-      data: rows
-      // data: {
-      //   product : rows;
-      //   image :
-      // }
+      message: "File uploaded successfully!",
+      files: uploadedImages,
+    });
+
+  } catch (error) {
+    console.error("Lỗi upload ảnh:", error);
+    res.status(500).json({ error: "Error uploading files" });
+  }
+});
+
+// API Thêm sản phẩm + lưu ảnh vào DB
+ProductRoute.post("/", (req, res) => {
+  const image = {
+    img1: req.body.image[0] || null,
+    img2: req.body.image[1] || null,
+    img3: req.body.image[2] || null,
+    img4: req.body.image[3] || null,
+  };
+  console.log(req.body);
+  Product.addProduct(req.body, (err, row) => {
+    if (err) return res.json(err);
+
+    Image.addImageByProductId(row.insertId, image, (err) => {
+      if (err) return res.json(err);
+
+      res.status(201).json({ success: true, data: req.body });
     });
   });
 });
 
-//API Get By Type
-ProductRoute.get("/types/:type", (req, res, next) => {
-  Product.getProductByType(req.params.type, (err, rows) => {
-    if (err) res.json(err);
-    else {
-      for (let i = 0; i < rows.length; i++) {
-        if (rows[i].bestseller == 1) {
-          rows[i].bestseller = true;
-        }
-        if (rows[i].bestseller == 0) {
-          rows[i].bestseller = false;
-        }
-        if (rows[i].newarrival == 0) {
-          rows[i].newarrival = false;
-        }
-        if (rows[i].newarrival == 1) {
-          rows[i].newarrival = true;
-        }
-      }
-      res.status(201).json({
-        success: true,
-        data: rows
-      });
-    }
+// API Xóa sản phẩm + Xóa ảnh trên S3
+ProductRoute.delete("/:id", (req, res) => {
+  Image.getImagesByProductId(req.params.id, async (err, rows) => {
+    if (err) return res.json(err);
+
+    // Xóa ảnh trên S3
+    await Promise.all(rows.flatMap((row) =>
+      [row.img1, row.img2, row.img3, row.img4]
+        .filter(Boolean)
+        .map((fileKey) =>
+          s3.deleteObject({
+            Bucket: process.env.BUCKETEER_BUCKET_NAME,
+            Key: fileKey,
+          }).promise()
+        )
+    ));
+
+    // Xóa sản phẩm khỏi DB
+    Product.deleteProduct(req.params.id, (err, count) => {
+      if (err) return res.json(err);
+
+      removeNotUsingImage(); // Xóa ảnh không dùng nữa
+      res.status(201).json({ success: true, count });
+    });
   });
 });
 
-// API Get product by id
-ProductRoute.get("/:id", (req, res, next) => {
-  Product.getProductById(req.params.id, (err, row) => {
-    if (err) res.json(err);
-    else {
-      const data = row;
-      if (row[0].bestseller == 1) {
-        data[0].bestseller = true;
-      }
-      if (row[0].bestseller == 0) {
-        data[0].bestseller = false;
-      }
-      if (row[0].newarrival == 0) {
-        data[0].newarrival = false;
-      }
-      if (row[0].newarrival == 1) {
-        data[0].newarrival = true;
-      }
-      res.status(201).json({
-        success: true,
-        data: data
-      });
-    }
-  });
-});
-
-//API update product
+// API Cập nhật sản phẩm
 ProductRoute.put("/:id", (req, res) => {
   Product.updateProduct(req.params.id, req.body, (err, rows) => {
-    if (err) res.json(err);
-    else {
-      removeNotUsingImage();
-      res.status(201).json({
-        success: true,
-        data: req.body
-      });
-    }
+    if (err) return res.json(err);
+
+    removeNotUsingImage(); // Xóa ảnh không sử dụng
+    res.status(201).json({ success: true, data: req.body });
   });
 });
 
-//API delete
-ProductRoute.delete("/:id", (req, res) => {
-  Product.deleteProduct(req.params.id, (err, count) => {
-    if (err) res.json(err);
-    else
-      {
-        removeNotUsingImage();
-        res.status(201).json({
-        success: true,
-        count: count
-      });}
+// API Lấy tất cả sản phẩm
+ProductRoute.get("/", (req, res) => {
+  Product.getAll((err, rows) => {
+    if (err) return res.json(err);
+
+    rows.forEach((row) => {
+      row.bestseller = row.bestseller === 1;
+      row.newarrival = row.newarrival === 1;
+    });
+
+    res.status(201).json({ success: true, data: rows });
+  });
+});
+
+// API Lấy sản phẩm theo loại
+ProductRoute.get("/types/:type", (req, res) => {
+  Product.getProductByType(req.params.type, (err, rows) => {
+    if (err) return res.json(err);
+
+    rows.forEach((row) => {
+      row.bestseller = row.bestseller === 1;
+      row.newarrival = row.newarrival === 1;
+    });
+
+    res.status(201).json({ success: true, data: rows });
+  });
+});
+
+// API Lấy sản phẩm theo ID
+ProductRoute.get("/:id", (req, res) => {
+  Product.getProductById(req.params.id, (err, row) => {
+    if (err) return res.json(err);
+
+    if (row.length > 0) {
+      row[0].bestseller = row[0].bestseller === 1;
+      row[0].newarrival = row[0].newarrival === 1;
+    }
+
+    res.status(201).json({ success: true, data: row });
   });
 });
 
