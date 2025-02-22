@@ -16,13 +16,6 @@ const s3 = new AWS.S3({
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   region: process.env.AWS_REGION,
 });
-console.log(
-  {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION,
-  }
-)
 
 // Xóa ảnh không sử dụng từ S3
 const removeNotUsingImage = async () => {
@@ -87,7 +80,7 @@ ProductRoute.post("/upload", upload.array("image", 4), async (req, res) => {
     res.json({
       success: true,
       message: "File uploaded successfully!",
-      files: uploadedImages,
+      fileNameInServer: uploadedImages,
     });
 
   } catch (error) {
