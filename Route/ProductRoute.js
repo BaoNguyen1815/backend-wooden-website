@@ -111,7 +111,7 @@ ProductRoute.post("/", (req, res) => {
 
 // API Xóa sản phẩm + Xóa ảnh trên S3
 ProductRoute.delete("/:id", (req, res) => {
-  Image.getImagesByProductId(req.params.id, async (err, rows) => {
+  Image.getImageByProductId(req.params.id, async (err, rows) => {
     if (err) return res.json(err);
 
     // Xóa ảnh trên S3
